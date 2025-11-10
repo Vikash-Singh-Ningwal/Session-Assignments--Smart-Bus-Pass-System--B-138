@@ -41,7 +41,7 @@ document.getElementById("purchaseBtn").addEventListener("click", async () => {
 
   // Razorpay checkout
   var options = {
-    key: "rzp_test_RcJkKW0f4CKH0V", 
+    key: "rzp_test_RcJkKW0f4CK", 
     amount: selectedPrice * 100,
     currency: "INR",
     name: "Smart Bus Pass",
