@@ -60,9 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const validatePhone = () => {
     const value = phone.value.trim();
     const error = document.getElementById('phone-error');
-    const phoneRegex = /^\+?\d{10,15}$/;
+    const phoneRegex = /^\+?\d{10}$/;
     if (!phoneRegex.test(value)) {
-      error.textContent = 'Enter a valid phone number (10-15 digits)';
+      error.textContent = 'Enter a valid phone number (With Out Country code)';
       error.style.display = 'block';
       return false;
     }
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const today = new Date();
     const inputDate = new Date(value);
     if (!value || inputDate >= today) {
-      error.textContent = 'Enter a valid past date';
+      error.textContent = 'Enter a valid DOB';
       error.style.display = 'block';
       return false;
     }

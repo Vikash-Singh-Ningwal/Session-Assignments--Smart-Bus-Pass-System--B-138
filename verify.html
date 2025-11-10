@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Bus Pass Verification</title>
+
+  <!-- Firebase & QR libraries -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0062ff, #4facfe);
+      color: #333;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 420px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      padding: 30px 25px 40px;
+      text-align: center;
+      animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      color: #222;
+      margin-bottom: 10px;
+    }
+
+    p.subtitle {
+      color: #666;
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+    }
+
+    #reader {
+      width: 100%;
+      border: 2px solid #0062ff;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    #result {
+      margin-top: 25px;
+      font-size: 0.95rem;
+      padding: 18px;
+      background: #f8faff;
+      border-radius: 12px;
+      border: 1px solid #e3ebff;
+      line-height: 1.6;
+      transition: all 0.3s ease;
+    }
+
+    .success {
+      border-left: 4px solid #28a745;
+      background: #eafaf1;
+    }
+
+    .error {
+      border-left: 4px solid #dc3545;
+      background: #fdeeee;
+    }
+
+    .status-active {
+      color: #28a745;
+      font-weight: 600;
+    }
+
+    .status-expired {
+      color: #dc3545;
+      font-weight: 600;
+    }
+
+    footer {
+      margin-top: 25px;
+      font-size: 0.8rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Smart Bus Pass Verification</h2>
+    <p class="subtitle">Scan a passenger’s QR code to verify their active pass</p>
+    <div id="reader"></div>
+    <div id="result">Awaiting QR scan...</div>
+    <footer>Smart Bus System © 2025</footer>
+  </div>
+
+  <script>
+    // Firebase Configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBNuza4ltSYYZf5eml5jdrjh_FuI8Rappk",
+      authDomain: "smart-bus-pass-system-b3950.firebaseapp.com",
+      projectId: "smart-bus-pass-system-b3950",
+      storageBucket: "smart-bus-pass-system-b3950.firebasestorage.app",
+      messagingSenderId: "422432816761",
+      appId: "1:422432816761:web:eb86fe0ee38153833ddea8",
+      measurementId: "G-H2M8MTJE4Q"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    const resultBox = document.getElementById("result");
+
+    async function verifyPass(qrValue) {
+      resultBox.className = "";
+      resultBox.innerHTML = "Verifying pass...";
+
+      try {
+        // Query users and passes
+        const usersSnap = await db.collection("users").get();
+        let found = false;
+
+        for (const userDoc of usersSnap.docs) {
+          const passSnap = await userDoc.ref
+            .collection("passes")
+            .where("qrData", "==", qrValue)
+            .limit(1)
+            .get();
+
+          if (!passSnap.empty) {
+            const pass = passSnap.docs[0].data();
+            const endDate = pass.endDate?.toDate() || new Date();
+            const isActive = endDate >= new Date();
+
+            resultBox.className = isActive ? "success" : "error";
+            resultBox.innerHTML = `
+              <strong>Pass Verified</strong><br>
+              <b>User ID:</b> ${userDoc.id}<br>
+              <b>Plan:</b> ${pass.plan || 'N/A'}<br>
+              <b>Price:</b> ₹${(pass.price || 0).toFixed(2)}<br>
+              <b>Valid Till:</b> ${endDate.toDateString()}<br>
+              <b>Status:</b> 
+              <span class="${isActive ? 'status-active' : 'status-expired'}">
+                ${isActive ? 'Active' : 'Expired'}
+              </span>
+            `;
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          resultBox.className = "error";
+          resultBox.innerHTML = "Invalid QR or pass not found.";
+        }
+      } catch (err) {
+        console.error(err);
+        resultBox.className = "error";
+        resultBox.innerHTML = "Error verifying pass: " + err.message;
+      }
+    }
+
+    function startScanner() {
+      const html5QrCode = new Html5Qrcode("reader");
+
+      html5QrCode.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        (decodedText) => {
+          html5QrCode.stop();
+          resultBox.className = "";
+          resultBox.innerHTML = `QR detected: <b>${decodedText}</b><br>Checking pass...`;
+          verifyPass(decodedText);
+        },
+        (errorMessage) => {
+        }
+      ).catch(err => {
+        console.error("Camera error:", err);
+        resultBox.className = "error";
+        resultBox.innerHTML = "Unable to access camera: " + err.message;
+      });
+    }
+
+    startScanner();
+  </script>
+</body>
+</html>
