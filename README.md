@@ -29,8 +29,9 @@ This dual-identifier system enhances security and ensures better account/pass ma
 
 🤝 Contact and Support
   For questions regarding this project, please contact:
-  Vikash Singh Ningwal
-  Student Email: vikash.ningwal04052004@gmail.com
+  - Vikash Singh Ningwal
+  - Student Email: vikash.ningwal04052004@gmail.com
   
 This project leverages cloud technology to make travel safer against cheating, avoid expensive validation machines, and provide a better solution for urban transport.
+
 
